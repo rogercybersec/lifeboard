@@ -570,6 +570,31 @@ tbody tr:hover{background:var(--bg-surface-raised);}
               <button class="btn btn-ghost btn-sm" onclick="testGemini()">Test AI</button>
             </div>
           </div>
+          <div class="settings-section">
+            <h4>Gmail Auto-Detection</h4>
+            <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:10px;">Auto-scan your Gmail for bills. A script runs in YOUR Google account — emails never leave Google. Only extracted bill data is sent to LifeBoard.</p>
+            <div class="settings-row">
+              <input type="text" id="emailSecret" placeholder="Shared secret (any password you choose)" autocomplete="off">
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" onclick="saveEmailSecret()">Save Secret</button>
+              <button class="btn btn-ghost btn-sm" onclick="copyAppsScript()">Copy Gmail Script</button>
+              <button class="btn btn-ghost btn-sm" onclick="testEmailParse()">Test Parser</button>
+            </div>
+            <div id="emailSetupResult" class="test-result"></div>
+            <details style="margin-top:12px;">
+              <summary style="font-size:0.76rem;color:var(--text-muted);cursor:pointer;">Setup instructions</summary>
+              <ol style="font-size:0.74rem;color:var(--text-secondary);line-height:1.8;margin-top:8px;padding-left:20px;">
+                <li>Choose a shared secret above and save it</li>
+                <li>Add the same secret as <code>LIFEBOARD_EMAIL_SECRET</code> on Vercel</li>
+                <li>Click "Copy Gmail Script" above</li>
+                <li>Go to <a href="https://script.google.com" target="_blank" style="color:var(--accent);">script.google.com</a> → New project</li>
+                <li>Paste the script, update YOUR_SECRET and YOUR_LIFEBOARD_URL</li>
+                <li>Set a trigger: Edit → Triggers → Add → scanForBills → Time-driven → Every hour</li>
+                <li>Authorise the script when prompted (it only reads your Gmail)</li>
+              </ol>
+            </details>
+          </div>
         </div>
         <div class="card">
           <div class="card-header"><div class="card-title">Data Management</div></div>
@@ -1929,6 +1954,134 @@ document.addEventListener('keydown', function(e) {
 // Close camera overlay on background click
 document.getElementById('cameraOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeScanBill();
+});
+
+// ============================================================
+// Gmail Auto-Detection — Settings + Apps Script template
+// ============================================================
+const EMAIL_SECRET_KEY = 'lifeboard_email_secret';
+
+function saveEmailSecret() {
+  const val = document.getElementById('emailSecret').value.trim();
+  if (!val) { showTestResult('error', 'Enter a secret first.'); return; }
+  localStorage.setItem(EMAIL_SECRET_KEY, val);
+  showTestResult('success', 'Secret saved locally. Now add LIFEBOARD_EMAIL_SECRET on Vercel with the same value.');
+}
+
+function copyAppsScript() {
+  const appUrl = window.location.origin;
+  const script = `// LifeBoard Gmail Bill Scanner
+// Runs in YOUR Google account. Emails never leave Google.
+// Only extracted text (from, subject, snippet) is sent to your LifeBoard server.
+
+const LIFEBOARD_URL = '${appUrl}/api/email/parse';
+const SECRET = 'YOUR_SECRET_HERE'; // Same as LIFEBOARD_EMAIL_SECRET on Vercel
+const LABEL_NAME = 'LifeBoard/Processed';
+
+// Keywords that indicate a bill/invoice/payment email
+const BILL_KEYWORDS = [
+  'invoice', 'bill', 'payment due', 'amount due', 'statement',
+  'your bill', 'payment reminder', 'pay now', 'due date',
+  'account balance', 'monthly statement', 'overdue', 'final notice',
+  'direct debit', 'autopay', 'payment received', 'receipt'
+];
+
+function scanForBills() {
+  // Search recent emails matching bill keywords
+  const queries = BILL_KEYWORDS.map(k => 'subject:' + k).join(' OR ');
+  const search = 'newer_than:2d (' + queries + ') -label:' + LABEL_NAME.replace('/', '-');
+
+  const threads = GmailApp.search(search, 0, 20);
+  if (threads.length === 0) return;
+
+  // Get or create processed label
+  let label = GmailApp.getUserLabelByName(LABEL_NAME);
+  if (!label) label = GmailApp.createLabel(LABEL_NAME);
+
+  const emails = [];
+  for (const thread of threads) {
+    const msgs = thread.getMessages();
+    const msg = msgs[msgs.length - 1]; // Latest message in thread
+    emails.push({
+      from: msg.getFrom(),
+      subject: msg.getSubject(),
+      body: msg.getPlainBody().substring(0, 2000),
+      date: msg.getDate().toISOString(),
+    });
+    thread.addLabel(label); // Mark as processed
+  }
+
+  if (emails.length === 0) return;
+
+  // Send to LifeBoard
+  const resp = UrlFetchApp.fetch(LIFEBOARD_URL, {
+    method: 'POST',
+    contentType: 'application/json',
+    headers: { 'Authorization': 'Bearer ' + SECRET },
+    payload: JSON.stringify({ emails: emails }),
+    muteHttpExceptions: true,
+  });
+
+  Logger.log('LifeBoard response: ' + resp.getContentText());
+}
+
+// Manual test function — run this first to verify it works
+function testConnection() {
+  const resp = UrlFetchApp.fetch(LIFEBOARD_URL, {
+    method: 'POST',
+    contentType: 'application/json',
+    headers: { 'Authorization': 'Bearer ' + SECRET },
+    payload: JSON.stringify({ emails: [{ from: 'test@example.com', subject: 'Test Invoice #123', body: 'Your bill of $99.95 is due on 2026-04-15. Account: ACC-001.', date: new Date().toISOString() }] }),
+    muteHttpExceptions: true,
+  });
+  Logger.log('Test result: ' + resp.getContentText());
+}`;
+
+  navigator.clipboard.writeText(script).then(() => {
+    showTestResult('success', 'Gmail script copied. Open script.google.com and paste it.');
+  }).catch(() => {
+    // Fallback: show in a textarea
+    const ta = document.createElement('textarea');
+    ta.value = script;
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;font-family:monospace;font-size:12px;padding:20px;';
+    document.body.appendChild(ta);
+    ta.select();
+    showTestResult('success', 'Script shown in overlay. Copy it manually, then click anywhere to close.');
+    ta.addEventListener('blur', () => ta.remove());
+  });
+}
+
+async function testEmailParse() {
+  showTestResult('info', 'Testing email parser...');
+  try {
+    const resp = await fetch('/api/email/parse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: localStorage.getItem(EMAIL_SECRET_KEY) || '',
+        emails: [{
+          from: 'billing@example.com',
+          subject: 'Your Monthly Invoice - $149.00 Due April 15',
+          body: 'Dear Customer, your invoice of $149.00 is due on 15 April 2026. Account ref: ACC-12345.',
+          date: new Date().toISOString(),
+        }],
+      }),
+    });
+    const data = await resp.json();
+    if (data.created > 0) {
+      showTestResult('success', 'Parser works. Test bill created: ' + JSON.stringify(data.results[0]));
+    } else {
+      showTestResult('info', 'Parser responded: ' + JSON.stringify(data));
+    }
+  } catch (e) {
+    showTestResult('error', 'Parser test failed: ' + e.message);
+  }
+}
+
+// Load saved email secret
+document.addEventListener('DOMContentLoaded', () => {
+  const s = localStorage.getItem(EMAIL_SECRET_KEY);
+  if (s) document.getElementById('emailSecret').value = s;
 });
 
 // ============================================================

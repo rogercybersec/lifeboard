@@ -1,12 +1,13 @@
 /**
- * LifeBoard — Daily Cron Payment Reminder
+ * LifeBoard — Smart Daily Secretary (Gemini-powered)
  * Vercel Serverless Function
  *
  * Runs daily at 9:00 AM AEDT (22:00 UTC previous day).
- * Reads synced bills from /tmp/lifeboard-bills.json (written by /api/sync).
- * Sends Telegram messages for bills due within 7/3/1/0 days or overdue.
+ * Reads synced bills from /tmp, uses Gemini AI to compose an intelligent
+ * daily digest instead of spamming individual threshold notifications.
+ * Falls back to threshold-based alerts if Gemini is unavailable.
  *
- * Env vars required: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+ * Env vars: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, GEMINI_API_KEY (optional)
  */
 
 const fs = require('fs');
@@ -41,8 +42,7 @@ function countdownText(days) {
 
 function loadBills() {
   try {
-    const raw = fs.readFileSync(BILLS_FILE, 'utf-8');
-    return JSON.parse(raw);
+    return JSON.parse(fs.readFileSync(BILLS_FILE, 'utf-8'));
   } catch {
     return null;
   }
@@ -50,8 +50,7 @@ function loadBills() {
 
 function loadSentKeys() {
   try {
-    const raw = fs.readFileSync(SENT_FILE, 'utf-8');
-    return JSON.parse(raw);
+    return JSON.parse(fs.readFileSync(SENT_FILE, 'utf-8'));
   } catch {
     return {};
   }
@@ -65,13 +64,8 @@ async function sendTelegram(token, chatId, text) {
   const resp = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: 'HTML',
-    }),
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
   });
-
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     throw new Error(err.description || `Telegram HTTP ${resp.status}`);
@@ -79,8 +73,30 @@ async function sendTelegram(token, chatId, text) {
   return resp.json();
 }
 
+async function askGemini(prompt) {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) return null;
+  try {
+    const resp = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + key,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.4, maxOutputTokens: 400 },
+        }),
+      }
+    );
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+  } catch {
+    return null;
+  }
+}
+
 module.exports = async function handler(req, res) {
-  // Only allow GET (Vercel cron) or POST (manual trigger)
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -89,91 +105,110 @@ module.exports = async function handler(req, res) {
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!token || !chatId) {
-    return res.status(500).json({
-      error: 'Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID env vars',
-    });
+    return res.status(500).json({ error: 'Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID' });
   }
 
   const bills = loadBills();
   if (!bills || !Array.isArray(bills) || bills.length === 0) {
-    // No bills synced yet — send a heads-up instead of failing silently
     try {
-      await sendTelegram(
-        token,
-        chatId,
-        '⚠️ <b>LifeBoard Cron</b>\nNo bills synced yet. Open LifeBoard in your browser to sync bills to the server.'
-      );
-    } catch {
-      // Telegram itself failed — nothing we can do
-    }
-    return res.status(200).json({
-      status: 'no_bills',
-      message: 'No bills data found in /tmp. Sync from the app first.',
-    });
+      await sendTelegram(token, chatId,
+        '<b>LifeBoard Secretary</b>\nNo bills synced. Open LifeBoard to sync your data.');
+    } catch {}
+    return res.status(200).json({ status: 'no_bills' });
   }
 
   const pending = bills.filter((b) => b.status !== 'paid');
   const today = new Date().toISOString().split('T')[0];
   const sent = loadSentKeys();
-  const thresholds = [7, 3, 1, 0];
   const results = [];
 
+  // Identify which bills need attention today
+  const needsAttention = [];
   for (const bill of pending) {
     const days = daysDiff(bill.dueDate);
-
+    const thresholds = [7, 3, 1, 0];
     for (const t of thresholds) {
       if (days === t || (days < 0 && t === 0)) {
         const sentKey = `${bill.id}_${t}_${today}`;
-        if (sent[sentKey]) {
-          results.push({ bill: bill.name, skipped: true, reason: 'already sent today' });
-          continue;
+        if (!sent[sentKey]) {
+          needsAttention.push({ bill, days, threshold: t, sentKey });
         }
+        break;
+      }
+    }
+  }
 
-        let urgency = '🔔 REMINDER';
-        if (days <= 0) urgency = '🚨 URGENT';
-        else if (days <= 1) urgency = '⏰ TOMORROW';
-        else if (days <= 3) urgency = '⚡ SOON';
+  if (needsAttention.length === 0) {
+    return res.status(200).json({ status: 'ok', date: today, pendingBills: pending.length, results: [] });
+  }
 
-        const message = [
-          `<b>${urgency}</b>`,
-          ``,
-          `<b>${bill.name}</b> — $${bill.amount.toFixed(2)}`,
-          `Due: ${formatDateLong(bill.dueDate)} (${countdownText(days)})`,
-          `Status: ${bill.status.toUpperCase()}`,
-          ``,
-          `— LifeBoard Secretary`,
-        ].join('\n');
+  // Try Gemini smart digest first (1 API call instead of N messages)
+  const billSummary = needsAttention.map(({ bill, days }) =>
+    `${bill.name}: $${bill.amount.toFixed(2)}, ${countdownText(days)}, ${bill.category}${bill.notes ? ' (' + bill.notes + ')' : ''}`
+  ).join('\n');
 
-        try {
-          await sendTelegram(token, chatId, message);
-          sent[sentKey] = true;
-          results.push({ bill: bill.name, days, urgency: urgency.replace(/[^A-Z]/g, '').trim(), sent: true });
-        } catch (e) {
-          results.push({ bill: bill.name, days, error: e.message });
-        }
+  let smartDigest = await askGemini(
+    'You are LifeBoard Secretary sending a Telegram morning briefing. ' +
+    'Write a concise daily payment digest (under 150 words, HTML format for Telegram). ' +
+    'Prioritise: overdue first, then due today, then upcoming. ' +
+    'Be direct, actionable, Australian English. Include dollar amounts. ' +
+    'Start with a one-line status summary. Do NOT repeat the same advice every day — ' +
+    'vary your language and focus on what\'s CHANGED since yesterday. ' +
+    'Today: ' + new Date().toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' }) +
+    '\n\nBills needing attention:\n' + billSummary +
+    '\n\nTotal pending: ' + pending.length + ' bills, $' +
+    pending.reduce((s, b) => s + b.amount, 0).toFixed(2) + ' total'
+  );
 
-        break; // Only fire the most urgent threshold per bill
+  if (smartDigest) {
+    // Send single smart digest
+    try {
+      await sendTelegram(token, chatId, smartDigest);
+      // Mark all as sent
+      for (const { sentKey, bill, days } of needsAttention) {
+        sent[sentKey] = true;
+        results.push({ bill: bill.name, days, sent: true, method: 'smart_digest' });
+      }
+    } catch (e) {
+      results.push({ error: 'Smart digest failed: ' + e.message });
+      smartDigest = null; // Fall through to individual alerts
+    }
+  }
+
+  // Fallback: individual threshold-based alerts
+  if (!smartDigest) {
+    for (const { bill, days, sentKey } of needsAttention) {
+      let urgency = 'REMINDER';
+      if (days <= 0) urgency = 'URGENT';
+      else if (days <= 1) urgency = 'TOMORROW';
+      else if (days <= 3) urgency = 'SOON';
+
+      const message = [
+        `<b>${days <= 0 ? '🚨' : days <= 1 ? '⏰' : days <= 3 ? '⚡' : '🔔'} ${urgency}</b>`,
+        ``,
+        `<b>${bill.name}</b> — $${bill.amount.toFixed(2)}`,
+        `Due: ${formatDateLong(bill.dueDate)} (${countdownText(days)})`,
+        ``,
+        `— LifeBoard Secretary`,
+      ].join('\n');
+
+      try {
+        await sendTelegram(token, chatId, message);
+        sent[sentKey] = true;
+        results.push({ bill: bill.name, days, sent: true, method: 'threshold' });
+      } catch (e) {
+        results.push({ bill: bill.name, error: e.message });
       }
     }
   }
 
   saveSentKeys(sent);
 
-  // Summary message if any bills were alerted
-  const alertedCount = results.filter((r) => r.sent).length;
-  if (alertedCount > 0) {
-    const summary = `📊 <b>LifeBoard Daily Summary</b>\n${alertedCount} payment reminder${alertedCount > 1 ? 's' : ''} sent.\n${pending.length} bills pending total.`;
-    try {
-      await sendTelegram(token, chatId, summary);
-    } catch {
-      // Non-critical
-    }
-  }
-
   return res.status(200).json({
     status: 'ok',
     date: today,
     pendingBills: pending.length,
+    method: smartDigest ? 'gemini_digest' : 'threshold_fallback',
     results,
   });
 };

@@ -112,10 +112,10 @@ a:hover{text-decoration:underline;}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:var(--radius);font-size:0.84rem;font-weight:500;font-family:inherit;cursor:pointer;border:none;transition:all var(--transition);white-space:nowrap;min-height:40px;}
 .btn:hover{transform:translateY(-1px);}
 .btn:active{transform:scale(0.97);transition-duration:0.1s;}
-.btn-primary{background:var(--accent);color:#0c0e12;font-weight:600;box-shadow:var(--shadow-sm),0 2px 8px rgba(20,184,166,0.15);}
-.btn-primary:hover{background:var(--accent-hover);box-shadow:var(--shadow),0 4px 16px rgba(20,184,166,0.2);}
-.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border);}
-.btn-ghost:hover{background:var(--bg-surface-raised);color:var(--text-primary);border-color:var(--bg-surface-overlay);}
+.btn-primary{background:rgba(20,184,166,0.12);color:var(--accent-text);font-weight:600;border:1px solid rgba(20,184,166,0.2);}
+.btn-primary:hover{background:rgba(20,184,166,0.2);border-color:rgba(20,184,166,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.07);color:var(--text-primary);}
 .btn-sm{padding:6px 14px;font-size:0.78rem;min-height:32px;border-radius:8px;}
 .btn-danger{background:rgba(248,113,113,0.08);color:var(--critical);border:1px solid rgba(248,113,113,0.12);}
 .btn-danger:hover{background:rgba(248,113,113,0.14);}
@@ -218,7 +218,7 @@ tbody tr:hover{background:var(--bg-surface-raised);}
 .alert-icon.error{background:var(--critical);}
 
 /* FAB (floating add button for mobile) */
-.fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:var(--radius-xl);background:var(--accent);color:#fff;border:none;font-size:1.6rem;font-weight:300;cursor:pointer;z-index:90;display:none;align-items:center;justify-content:center;box-shadow:var(--shadow-md);transition:all var(--transition);line-height:1;}
+.fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:var(--radius-xl);background:rgba(20,184,166,0.15);color:var(--accent-text);border:1px solid rgba(20,184,166,0.25);font-size:1.6rem;font-weight:300;cursor:pointer;z-index:90;display:none;align-items:center;justify-content:center;box-shadow:var(--shadow-md);transition:all var(--transition);line-height:1;backdrop-filter:blur(12px);}
 .fab:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(0,0,0,0.3);}
 .fab:active{transform:scale(0.95);transition-duration:0.1s;}
 @media(max-width:768px){.fab{display:flex;}}
@@ -380,6 +380,7 @@ tbody tr:hover{background:var(--bg-surface-raised);}
               <button class="btn btn-ghost btn-sm" onclick="showPage('bills')">View All</button>
             </div>
           </div>
+          <div id="aiBriefing" style="display:none;background:linear-gradient(135deg,rgba(20,184,166,0.06),rgba(96,165,250,0.04));border:1px solid rgba(20,184,166,0.15);border-radius:var(--radius-lg);padding:16px 18px;font-size:0.82rem;color:var(--text-secondary);line-height:1.65;margin-bottom:14px;white-space:pre-wrap;"></div>
           <div id="aiStrategyResult" style="display:none;background:var(--bg-body);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;white-space:pre-wrap;"></div>
           <div class="upcoming-list" id="upcomingList"></div>
         </div>
@@ -487,10 +488,13 @@ tbody tr:hover{background:var(--bg-surface-raised);}
               </div>
             </div>
           </div>
-          <div style="display:flex;gap:8px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-primary btn-sm" onclick="runSecretaryCheck()">Run Check Now</button>
+            <button class="btn btn-ghost btn-sm" onclick="askSecretaryVoice()" title="Talk to your secretary">🎤 Ask Secretary</button>
             <button class="btn btn-ghost btn-sm" onclick="clearAlerts()">Clear Log</button>
           </div>
+          <div id="voiceQueryStatus" style="font-size:0.78rem;color:var(--accent);margin-top:8px;display:none;"></div>
+          <div id="voiceQueryResult" style="display:none;background:var(--bg-body);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin-top:12px;white-space:pre-wrap;"></div>
         </div>
         <div class="card">
           <div class="card-header">
@@ -638,7 +642,11 @@ tbody tr:hover{background:var(--bg-surface-raised);}
     </div>
     <div class="form-group">
       <label>Notes</label>
-      <input type="text" id="billNotes" placeholder="Account number, reference, anything...">
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="billNotes" placeholder="Account number, reference, anything..." style="flex:1;">
+        <button class="btn btn-ghost btn-sm" id="voiceNoteBtn" onclick="toggleVoiceNote()" title="Voice note" style="min-width:40px;font-size:1.1rem;">🎤</button>
+      </div>
+      <div id="voiceStatus" style="font-size:0.74rem;color:var(--accent);margin-top:4px;display:none;"></div>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -1085,6 +1093,7 @@ function renderBills() {
       <td>
         <div style="display:flex;gap:4px;">
           ${b.status !== 'paid' ? `<button class="btn btn-success btn-sm" onclick="markPaid('${b.id}')" style="padding:4px 10px;min-height:28px;font-size:0.72rem;">Paid</button>` : ''}
+          ${b.status !== 'paid' ? `<button class="btn btn-ghost btn-sm" onclick="deferBill('${b.id}')" style="padding:4px 10px;min-height:28px;font-size:0.72rem;">Defer</button>` : ''}
           ${b.status === 'overdue' || (b.status === 'pending' && daysDiff(b.dueDate) <= 3) ? `<button class="btn btn-warning btn-sm" onclick="openBuyTime('${b.id}')" style="padding:4px 10px;min-height:28px;font-size:0.72rem;">Buy Time</button>` : ''}
           <button class="btn btn-ghost btn-sm" onclick="editBill('${b.id}')" style="padding:4px 10px;min-height:28px;font-size:0.72rem;">Edit</button>
           <button class="btn btn-danger btn-sm" onclick="deleteBill('${b.id}')" style="padding:4px 10px;min-height:28px;font-size:0.72rem;">Del</button>
@@ -1098,12 +1107,29 @@ function markPaid(id) {
   const bill = bills.find(b => b.id === id);
   if (!bill) return;
   bill.status = 'paid';
+  recordPayment(bill.id, bill.name, new Date().toISOString().split('T')[0]);
   const nextDate = getNextDueDate(bill.dueDate, bill.frequency);
-  // Create next occurrence
   const next = { ...bill, id: genId(), dueDate: nextDate, status: 'pending' };
   bills.push(next);
   saveData();
   addAlert('sent', `${bill.name} marked as paid. Next due: ${formatDate(nextDate)}`);
+  renderAll();
+}
+
+function deferBill(id) {
+  const bill = bills.find(b => b.id === id);
+  if (!bill) return;
+  const newDate = prompt('New due date (YYYY-MM-DD):', bill.dueDate);
+  if (!newDate || !/^\d{4}-\d{2}-\d{2}$/.test(newDate)) return;
+  const reason = prompt('Reason for deferral (e.g. "Called MoneyMe, agreed to extend"):');
+  const oldDate = bill.dueDate;
+  bill.dueDate = newDate;
+  bill.status = 'pending';
+  if (!bill.actions) bill.actions = [];
+  bill.actions.push({ type: 'defer', from: oldDate, to: newDate, reason: reason || '', date: new Date().toISOString() });
+  if (reason) bill.notes = (bill.notes ? bill.notes + ' | ' : '') + 'Deferred: ' + reason;
+  saveData();
+  addAlert('sent', `${bill.name} deferred from ${formatDate(oldDate)} to ${formatDate(newDate)}${reason ? ' — ' + reason : ''}`);
   renderAll();
 }
 
@@ -1932,6 +1958,160 @@ document.getElementById('billName').addEventListener('blur', async function() {
 });
 
 // ============================================================
+// Voice Input — Web Speech API (free, built into browser)
+// ============================================================
+let voiceRecognition = null;
+let voiceTarget = null;
+
+function getSpeechRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.continuous = false;
+  r.interimResults = false;
+  r.lang = 'en-AU';
+  return r;
+}
+
+function toggleVoiceNote() {
+  const statusEl = document.getElementById('voiceStatus');
+  const btn = document.getElementById('voiceNoteBtn');
+  if (voiceRecognition) { voiceRecognition.stop(); return; }
+  const r = getSpeechRecognition();
+  if (!r) { statusEl.style.display = 'block'; statusEl.textContent = 'Voice not supported in this browser.'; return; }
+  voiceRecognition = r;
+  voiceTarget = 'billNotes';
+  btn.style.color = 'var(--critical)';
+  statusEl.style.display = 'block';
+  statusEl.textContent = 'Listening...';
+  r.onresult = (e) => {
+    const text = e.results[0][0].transcript;
+    const field = document.getElementById(voiceTarget);
+    field.value = field.value ? field.value + ' ' + text : text;
+    statusEl.textContent = 'Got it.';
+    setTimeout(() => { statusEl.style.display = 'none'; }, 1500);
+  };
+  r.onerror = () => { statusEl.textContent = 'Voice error. Try again.'; };
+  r.onend = () => { voiceRecognition = null; btn.style.color = ''; };
+  r.start();
+}
+
+function askSecretaryVoice() {
+  const statusEl = document.getElementById('voiceQueryStatus');
+  const resultEl = document.getElementById('voiceQueryResult');
+  if (voiceRecognition) { voiceRecognition.stop(); return; }
+  const r = getSpeechRecognition();
+  if (!r) { statusEl.style.display = 'block'; statusEl.textContent = 'Voice not supported.'; return; }
+  voiceRecognition = r;
+  statusEl.style.display = 'block';
+  statusEl.textContent = 'Listening... ask your question about bills.';
+  r.onresult = async (e) => {
+    const question = e.results[0][0].transcript;
+    statusEl.textContent = 'You asked: "' + question + '" — thinking...';
+    resultEl.style.display = 'block';
+    resultEl.textContent = 'Analysing...';
+    const billContext = bills.filter(b => b.status !== 'paid').map(b =>
+      b.name + ': $' + b.amount.toFixed(2) + ' due ' + b.dueDate + ' (' + b.category + ', ' + b.status + ')' + (b.notes ? ' Notes: ' + b.notes : '')
+    ).join('\n');
+    const answer = await askGemini(
+      'You are LifeBoard, a smart financial secretary. Answer this question about the user\'s bills. Be specific, helpful, proactive. Australian English. Under 200 words.\n\nBills:\n' + billContext + '\n\nQuestion: ' + question
+    );
+    resultEl.textContent = answer || 'Could not get a response. Check your Gemini API key.';
+    statusEl.style.display = 'none';
+  };
+  r.onerror = () => { statusEl.textContent = 'Voice error. Try again.'; };
+  r.onend = () => { voiceRecognition = null; };
+  r.start();
+}
+
+// ============================================================
+// Smart Gemini — Proactive briefing, dedup, rate-limit aware
+// ============================================================
+const GEMINI_DAILY_CALLS_KEY = 'lifeboard_gemini_calls';
+const GEMINI_BRIEFING_KEY = 'lifeboard_last_briefing';
+
+function getGeminiCallCount() {
+  const data = JSON.parse(localStorage.getItem(GEMINI_DAILY_CALLS_KEY) || '{}');
+  const today = new Date().toISOString().split('T')[0];
+  if (data.date !== today) return 0;
+  return data.count || 0;
+}
+
+function incrementGeminiCalls() {
+  const today = new Date().toISOString().split('T')[0];
+  const data = JSON.parse(localStorage.getItem(GEMINI_DAILY_CALLS_KEY) || '{}');
+  if (data.date !== today) {
+    localStorage.setItem(GEMINI_DAILY_CALLS_KEY, JSON.stringify({ date: today, count: 1 }));
+  } else {
+    data.count = (data.count || 0) + 1;
+    localStorage.setItem(GEMINI_DAILY_CALLS_KEY, JSON.stringify(data));
+  }
+}
+
+// Override askGemini to track calls and respect limits
+const _originalAskGemini = askGemini;
+askGemini = async function(prompt) {
+  const calls = getGeminiCallCount();
+  if (calls >= 50) return null; // Stay well under 15 req/min, max ~50/day for safety
+  incrementGeminiCalls();
+  return _originalAskGemini(prompt);
+};
+
+async function proactiveBriefing() {
+  if (!getGeminiKey()) return;
+  const pending = bills.filter(b => b.status !== 'paid');
+  if (!pending.length) return;
+
+  // Only brief once per session (or every 4 hours)
+  const lastBriefing = localStorage.getItem(GEMINI_BRIEFING_KEY);
+  const now = Date.now();
+  if (lastBriefing && (now - parseInt(lastBriefing)) < 4 * 60 * 60 * 1000) return;
+
+  const el = document.getElementById('aiBriefing');
+  if (!el) return;
+
+  const billSummary = pending.map(b => {
+    const days = daysDiff(b.dueDate);
+    return b.name + ': $' + b.amount.toFixed(2) + ' (' + countdownText(days) + ', ' + b.category + ')' + (b.notes ? ' [' + b.notes + ']' : '');
+  }).join('\n');
+
+  el.style.display = 'block';
+  el.textContent = 'Secretary is reviewing your bills...';
+
+  const briefing = await askGemini(
+    'You are LifeBoard Secretary. Give a brief morning briefing (under 120 words) about these pending bills. ' +
+    'Be proactive: warn about overdue, highlight what needs immediate attention, suggest which to pay first. ' +
+    'If any are recurring, note expected next dates. Be direct, no fluff. Australian English. Today is ' +
+    new Date().toLocaleDateString('en-AU') + '.\n\n' + billSummary
+  );
+
+  if (briefing) {
+    el.textContent = briefing;
+    localStorage.setItem(GEMINI_BRIEFING_KEY, String(now));
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ============================================================
+// Smart Bill Learning — Track payment patterns
+// ============================================================
+const PAYMENT_HISTORY_KEY = 'lifeboard_payment_history';
+
+function recordPayment(billId, billName, paidDate) {
+  const history = JSON.parse(localStorage.getItem(PAYMENT_HISTORY_KEY) || '{}');
+  if (!history[billId]) history[billId] = [];
+  history[billId].push({ name: billName, paid: paidDate, timestamp: Date.now() });
+  // Keep last 12 payments per bill
+  if (history[billId].length > 12) history[billId] = history[billId].slice(-12);
+  localStorage.setItem(PAYMENT_HISTORY_KEY, JSON.stringify(history));
+}
+
+function getPaymentHistory() {
+  return JSON.parse(localStorage.getItem(PAYMENT_HISTORY_KEY) || '{}');
+}
+
+// ============================================================
 // Init — Lock screen first, then app
 // ============================================================
 initLock();
@@ -1944,6 +2124,9 @@ if (navigator.serviceWorker) {
     syncBillsToServer();
   });
 }
+
+// Proactive briefing on app open (after a short delay to let data load)
+setTimeout(proactiveBriefing, 2000);
 </script>
 </body>
 </html>

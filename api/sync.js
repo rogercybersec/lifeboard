@@ -20,8 +20,10 @@ const BILLS_FILE = path.join('/tmp', 'lifeboard-bills.json');
 const META_FILE = path.join('/tmp', 'lifeboard-sync-meta.json');
 
 module.exports = async function handler(req, res) {
-  // CORS headers for browser requests
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS: restrict to same origin in production
+  const origin = req.headers.origin || '';
+  const allowedOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '*';
+  res.setHeader('Access-Control-Allow-Origin', origin || allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 

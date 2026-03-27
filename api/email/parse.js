@@ -56,21 +56,44 @@ async function askGemini(prompt) {
   }
 }
 
+// Timing-safe string comparison to prevent timing attacks
+function timingSafeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  if (a.length !== b.length) return false;
+  const crypto = require('crypto');
+  return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
+
+// Sanitize string input — strip HTML/script tags
+function sanitize(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/<[^>]*>/g, '').replace(/[<>"'&]/g, (c) => {
+    const map = { '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '&': '&amp;' };
+    return map[c] || c;
+  }).slice(0, 5000);
+}
+
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS: only allow same origin and Google Apps Script
+  const origin = req.headers.origin || '';
+  if (origin && origin.includes('script.google.com')) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  // Auth check
+  // Auth REQUIRED — reject if no secret configured
   const secret = process.env.LIFEBOARD_EMAIL_SECRET;
-  if (secret) {
-    const provided = req.headers.authorization?.replace('Bearer ', '') || req.body?.secret;
-    if (provided !== secret) {
-      return res.status(401).json({ error: 'Invalid secret' });
-    }
+  if (!secret) {
+    return res.status(503).json({ error: 'LIFEBOARD_EMAIL_SECRET not configured on server' });
+  }
+
+  const provided = (req.headers.authorization || '').replace('Bearer ', '') || req.body?.secret || '';
+  if (!provided || !timingSafeEqual(provided, secret)) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const { emails } = req.body;
@@ -84,18 +107,22 @@ module.exports = async function handler(req, res) {
   const results = [];
 
   for (const email of batch) {
-    const { from, subject, body, date } = email;
+    const from = sanitize(email.from);
+    const subject = sanitize(email.subject);
+    const body = sanitize(email.body);
+    const date = sanitize(email.date);
+
     if (!subject && !body) {
       results.push({ skipped: true, reason: 'No subject or body' });
       continue;
     }
 
-    // Ask Gemini to extract bill data
+    // Ask Gemini to extract bill data (all input sanitized)
     const emailText = [
       `From: ${from || 'unknown'}`,
       `Subject: ${subject || ''}`,
       `Date: ${date || ''}`,
-      `Body (first 2000 chars): ${(body || '').slice(0, 2000)}`,
+      `Body (first 2000 chars): ${body.slice(0, 2000)}`,
     ].join('\n');
 
     const parsed = await askGemini(

@@ -30,7 +30,8 @@ function saveBills(bills) {
 }
 
 function genId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const crypto = require('crypto');
+  return Date.now().toString(36) + crypto.randomBytes(4).toString('hex');
 }
 
 async function askGemini(prompt) {

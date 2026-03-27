@@ -97,8 +97,22 @@ async function askGemini(prompt) {
 }
 
 module.exports = async function handler(req, res) {
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Cache-Control', 'no-store');
+
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Auth: Vercel cron sends CRON_SECRET header, or use shared secret
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret) {
+    const provided = req.headers.authorization?.replace('Bearer ', '') || '';
+    if (!provided || provided !== cronSecret) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
   }
 
   const token = process.env.TELEGRAM_BOT_TOKEN;

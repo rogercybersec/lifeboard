@@ -1,5 +1,11 @@
 {
   "buildCommand": null,
   "outputDirectory": "public",
-  "framework": null
+  "framework": null,
+  "crons": [
+    {
+      "path": "/api/cron/check",
+      "schedule": "0 22 * * *"
+    }
+  ]
 }

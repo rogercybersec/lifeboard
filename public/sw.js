@@ -10,7 +10,7 @@
  * from the main thread via postMessage.
  */
 
-const CACHE_NAME = 'lifeboard-v1';
+const CACHE_NAME = 'lifeboard-v2';
 const DB_NAME = 'lifeboard-sw';
 const DB_VERSION = 1;
 const STORE_BILLS = 'bills';
@@ -213,7 +213,15 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
 // ============================================================

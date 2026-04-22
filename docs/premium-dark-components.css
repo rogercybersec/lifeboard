@@ -1,0 +1,1234 @@
+/* ============================================================
+   PREMIUM DARK FINANCE DASHBOARD — Component Library
+   Pure CSS with CSS Variables. No React, no Tailwind.
+
+   Sources:
+   - shadcn/ui dark theme (OKLCH variables)
+   - Aceternity UI (glassmorphism patterns)
+   - GitHub Gist: Glassmorphism Analytics Dashboard
+   - CodePen: Dark UI Bank Dashboard concepts
+   - LifeBoard existing design tokens (extended)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ============================================================
+   1. CSS VARIABLES — Dark Finance Theme
+   ============================================================ */
+:root {
+  /* — Backgrounds — */
+  --bg-body: #08090c;
+  --bg-surface: rgba(255,255,255,0.028);
+  --bg-surface-raised: rgba(255,255,255,0.048);
+  --bg-surface-overlay: #161920;
+  --bg-surface-glass: rgba(255,255,255,0.06);
+  --bg-input: #0c0e13;
+  --bg-input-focus: #10131a;
+  --bg-hover: rgba(255,255,255,0.04);
+  --bg-active: rgba(255,255,255,0.07);
+
+  /* — Text — */
+  --text-primary: #eaecf0;
+  --text-secondary: #8a919d;
+  --text-muted: #4e5563;
+  --text-disabled: #333842;
+  --text-inverse: #0a0c10;
+
+  /* — Accent / Brand — */
+  --accent: #10b981;
+  --accent-hover: #34d399;
+  --accent-subtle: rgba(16,185,129,0.07);
+  --accent-text: #6ee7b7;
+  --accent-glow: rgba(16,185,129,0.15);
+  --accent-border: rgba(16,185,129,0.25);
+
+  /* — Semantic Colors — */
+  --critical: #f87171;
+  --critical-subtle: rgba(248,113,113,0.06);
+  --critical-glow: rgba(248,113,113,0.12);
+  --critical-border: rgba(248,113,113,0.2);
+
+  --warning: #fbbf24;
+  --warning-subtle: rgba(251,191,36,0.06);
+  --warning-glow: rgba(251,191,36,0.1);
+  --warning-border: rgba(251,191,36,0.2);
+
+  --success: #10b981;
+  --success-subtle: rgba(16,185,129,0.06);
+  --success-border: rgba(16,185,129,0.2);
+
+  --info: #60a5fa;
+  --info-subtle: rgba(96,165,250,0.06);
+  --info-glow: rgba(96,165,250,0.1);
+  --info-border: rgba(96,165,250,0.2);
+
+  /* — Chart Colors — */
+  --chart-1: #818cf8;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #f472b6;
+  --chart-5: #60a5fa;
+
+  /* — Borders — */
+  --border: rgba(255,255,255,0.06);
+  --border-subtle: rgba(255,255,255,0.03);
+  --border-hover: rgba(255,255,255,0.12);
+  --border-focus: rgba(16,185,129,0.4);
+  --border-glass: rgba(255,255,255,0.1);
+
+  /* — Radius — */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* — Shadows — */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.25);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.15);
+  --shadow: 0 2px 4px rgba(0,0,0,0.2), 0 8px 16px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.02) inset;
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.25), 0 16px 32px rgba(0,0,0,0.15);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.3), 0 32px 64px rgba(0,0,0,0.2);
+  --shadow-glow-accent: 0 0 20px rgba(16,185,129,0.15), 0 0 60px rgba(16,185,129,0.05);
+  --shadow-glow-info: 0 0 20px rgba(96,165,250,0.15), 0 0 60px rgba(96,165,250,0.05);
+
+  /* — Motion — */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration: 200ms;
+  --duration-slow: 350ms;
+
+  /* — Typography — */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ============================================================
+   2. GLASSMORPHISM CARD
+   Source: Aceternity card-spotlight + Gist analytics dashboard
+   ============================================================ */
+.card {
+  background: var(--bg-surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow);
+  transition: all var(--duration) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+}
+
+.card:hover {
+  background: var(--bg-surface-raised);
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Card with spotlight / glow on hover */
+.card-spotlight {
+  background: var(--bg-surface);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  transition: all 0.3s var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-spotlight:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
+
+/* Glass variant — heavier frost */
+.card-glass {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.36);
+  transition: all 0.3s var(--ease-out);
+}
+
+.card-glass:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.2);
+  transform: translateY(-3px);
+}
+
+/* Card header / title area */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.card-title {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.card-value {
+  font-family: var(--font-sans);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.card-description {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 0.5rem;
+}
+
+
+/* ============================================================
+   3. KPI / STAT CARD
+   Source: Gist analytics + shadcn card patterns
+   ============================================================ */
+.stat-card {
+  background: var(--bg-surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow);
+  transition: all var(--duration) var(--ease-out);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stat-card:hover {
+  background: var(--bg-surface-raised);
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.stat-value {
+  font-family: var(--font-sans);
+  font-size: 1.875rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+
+.stat-value-mono {
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.stat-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-full);
+}
+
+.stat-change-up {
+  color: var(--success);
+  background: var(--success-subtle);
+  border: 1px solid var(--success-border);
+}
+
+.stat-change-down {
+  color: var(--critical);
+  background: var(--critical-subtle);
+  border: 1px solid var(--critical-border);
+}
+
+.stat-footer {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* Mini sparkline bar inside stat card */
+.stat-mini-chart {
+  height: 36px;
+  background: linear-gradient(90deg, var(--accent-subtle), transparent);
+  border-radius: var(--radius-sm);
+  position: relative;
+  overflow: hidden;
+  margin-top: 0.25rem;
+}
+
+.stat-mini-chart::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  animation: shimmer 3s infinite;
+}
+
+/* Icon container inside stat card */
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.stat-icon-accent {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+}
+
+.stat-icon-info {
+  background: var(--info-subtle);
+  color: var(--info);
+  border: 1px solid var(--info-border);
+}
+
+.stat-icon-warning {
+  background: var(--warning-subtle);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
+}
+
+.stat-icon-critical {
+  background: var(--critical-subtle);
+  color: var(--critical);
+  border: 1px solid var(--critical-border);
+}
+
+
+/* ============================================================
+   4. BUTTONS
+   Source: shadcn + Aceternity + Gist dashboard
+   ============================================================ */
+
+/* Primary — solid accent */
+.btn {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--duration) var(--ease-out);
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--text-inverse);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2), 0 0 0 1px rgba(16,185,129,0.3), var(--shadow-glow-accent);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 0 1px rgba(52,211,153,0.4), 0 0 30px rgba(16,185,129,0.2);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px rgba(16,185,129,0.4);
+}
+
+/* Secondary — outlined glass */
+.btn-secondary {
+  background: rgba(255,255,255,0.06);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  background: rgba(255,255,255,0.12);
+  transform: translateY(0);
+}
+
+/* Ghost — transparent, text only */
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+}
+
+.btn-ghost:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.btn-ghost:active {
+  background: var(--bg-active);
+}
+
+/* Destructive */
+.btn-destructive {
+  background: rgba(248,113,113,0.1);
+  color: var(--critical);
+  border: 1px solid var(--critical-border);
+}
+
+.btn-destructive:hover {
+  background: rgba(248,113,113,0.15);
+  border-color: rgba(248,113,113,0.35);
+  box-shadow: 0 0 20px rgba(248,113,113,0.1);
+}
+
+/* Icon-only button (square) */
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+}
+
+/* Pill shape */
+.btn-pill {
+  border-radius: var(--radius-full);
+  padding: 0.5rem 1rem;
+}
+
+/* Sizes */
+.btn-sm { font-size: 0.8125rem; padding: 0.4rem 0.875rem; }
+.btn-lg { font-size: 0.9375rem; padding: 0.75rem 1.5rem; }
+
+/* Button disabled */
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* Loading state */
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+
+/* ============================================================
+   5. TABLE ROW STYLING
+   Source: Finance dashboard patterns + shadcn data table
+   ============================================================ */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+}
+
+.table thead th {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.table tbody tr {
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.table tbody tr:hover td {
+  border-bottom-color: var(--border);
+}
+
+/* Sortable column header */
+.table-th-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.table-th-sortable:hover {
+  color: var(--text-secondary);
+}
+
+/* Amount / money column — right aligned, monospace */
+.table-td-amount {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Status column — inline badge */
+.table-td-status {
+  white-space: nowrap;
+}
+
+/* Compact table variant */
+.table-compact thead th { padding: 0.5rem 0.75rem; }
+.table-compact tbody td { padding: 0.5rem 0.75rem; font-size: 0.8125rem; }
+
+/* Striped rows */
+.table-striped tbody tr:nth-child(even) {
+  background: rgba(255,255,255,0.015);
+}
+
+
+/* ============================================================
+   6. BADGE / TAG
+   Source: shadcn badge + stat-change pattern
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+/* Accent / default */
+.badge-accent {
+  background: var(--accent-subtle);
+  color: var(--accent-text);
+  border: 1px solid var(--accent-border);
+}
+
+/* Success */
+.badge-success {
+  background: var(--success-subtle);
+  color: var(--success);
+  border: 1px solid var(--success-border);
+}
+
+/* Warning */
+.badge-warning {
+  background: var(--warning-subtle);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
+}
+
+/* Critical / Error */
+.badge-critical {
+  background: var(--critical-subtle);
+  color: var(--critical);
+  border: 1px solid var(--critical-border);
+}
+
+/* Info */
+.badge-info {
+  background: var(--info-subtle);
+  color: var(--info);
+  border: 1px solid var(--info-border);
+}
+
+/* Neutral / muted */
+.badge-neutral {
+  background: rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+/* Dot indicator before badge text */
+.badge-dot::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* Pulsing dot (for "live" / "active" states) */
+.badge-pulse::before {
+  animation: pulse 2s infinite;
+}
+
+
+/* ============================================================
+   7. INPUT FIELDS — Dark Theme
+   Source: shadcn input + Gist search-box + Aceternity gooey-input
+   ============================================================ */
+.input {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.625rem 0.875rem;
+  width: 100%;
+  outline: none;
+  transition: all var(--duration) var(--ease-out);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:hover {
+  border-color: var(--border-hover);
+}
+
+.input:focus {
+  border-color: var(--border-focus);
+  background: var(--bg-input-focus);
+  box-shadow: 0 0 0 3px var(--accent-subtle), 0 0 20px rgba(16,185,129,0.05);
+}
+
+.input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Input with glass effect */
+.input-glass {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-full);
+  padding: 0.625rem 1rem;
+  color: var(--text-primary);
+}
+
+.input-glass:focus {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.04);
+}
+
+/* Search input with icon */
+.input-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-search-wrap .input {
+  padding-left: 2.5rem;
+}
+
+.input-search-icon {
+  position: absolute;
+  left: 0.875rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  font-size: 0.875rem;
+  opacity: 0.6;
+}
+
+/* Label */
+.input-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.375rem;
+}
+
+/* Error state */
+.input-error {
+  border-color: var(--critical-border);
+}
+
+.input-error:focus {
+  border-color: var(--critical);
+  box-shadow: 0 0 0 3px var(--critical-subtle);
+}
+
+.input-error-text {
+  font-size: 0.75rem;
+  color: var(--critical);
+  margin-top: 0.25rem;
+}
+
+/* Textarea */
+.textarea {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+  outline: none;
+  transition: all var(--duration) var(--ease-out);
+}
+
+.textarea:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+/* Select */
+.select {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.625rem 2.25rem 0.625rem 0.875rem;
+  width: 100%;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%234e5563' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  transition: all var(--duration) var(--ease-out);
+}
+
+.select:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+
+/* ============================================================
+   8. NAVIGATION / TAB BAR
+   Source: Aceternity animated-tabs + floating-dock + sidebar
+   ============================================================ */
+
+/* Horizontal tab bar */
+.tab-bar {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.25rem;
+}
+
+.tab-item {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all var(--duration) var(--ease-out);
+  white-space: nowrap;
+  position: relative;
+}
+
+.tab-item:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+.tab-item-active {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.08);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Pill tabs — chart time selectors */
+.tab-pills {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.tab-pill {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: all var(--duration) var(--ease-out);
+}
+
+.tab-pill:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border-color: var(--border);
+}
+
+.tab-pill-active {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.08);
+  border-color: var(--border-hover);
+}
+
+/* Vertical sidebar navigation */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.5rem;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.625rem 0.875rem;
+  cursor: pointer;
+  transition: all var(--duration) var(--ease-out);
+  text-decoration: none;
+  text-align: left;
+  width: 100%;
+}
+
+.sidebar-nav-item:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.sidebar-nav-item-active {
+  color: var(--accent-text);
+  background: var(--accent-subtle);
+}
+
+.sidebar-nav-item-active:hover {
+  background: rgba(16,185,129,0.1);
+}
+
+.sidebar-nav-icon {
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.sidebar-nav-item-active .sidebar-nav-icon {
+  opacity: 1;
+}
+
+/* Sidebar section title */
+.sidebar-section-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 1rem 0.875rem 0.375rem;
+}
+
+/* Bottom dock (floating) — inspired by Aceternity floating-dock */
+.dock {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-2xl);
+  padding: 0.5rem 0.75rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.dock-item {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--duration) var(--ease-spring);
+  font-size: 1.125rem;
+}
+
+.dock-item:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-primary);
+  transform: scale(1.15) translateY(-4px);
+}
+
+.dock-item-active {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.dock-separator {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 0.25rem;
+}
+
+
+/* ============================================================
+   9. PROGRESS / METRIC BAR
+   Source: Gist performance-metrics
+   ============================================================ */
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+  border-radius: var(--radius-full);
+  transition: width 0.6s var(--ease-out);
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  animation: shimmer 3s infinite;
+}
+
+.progress-fill-info { background: linear-gradient(90deg, var(--info), #93c5fd); }
+.progress-fill-warning { background: linear-gradient(90deg, var(--warning), #fcd34d); }
+.progress-fill-critical { background: linear-gradient(90deg, var(--critical), #fca5a5); }
+
+
+/* ============================================================
+   10. ACTIVITY / LIST ITEMS
+   Source: Gist activity-list
+   ============================================================ */
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255,255,255,0.02);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  transition: all var(--duration) var(--ease-out);
+}
+
+.activity-item:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--border);
+  transform: translateX(4px);
+}
+
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent-glow);
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+
+.activity-text {
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.activity-time {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+
+/* ============================================================
+   11. TOOLTIP / POPOVER
+   ============================================================ */
+.tooltip {
+  position: relative;
+}
+
+.tooltip-content {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  background: var(--bg-surface-overlay);
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius-sm);
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  pointer-events: none;
+  transition: all var(--duration-fast) var(--ease-out);
+  z-index: 50;
+}
+
+.tooltip:hover .tooltip-content {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+
+/* ============================================================
+   12. AVATAR
+   ============================================================ */
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  box-shadow: 0 2px 8px rgba(79,70,229,0.3);
+  flex-shrink: 0;
+}
+
+.avatar-sm { width: 28px; height: 28px; font-size: 0.75rem; }
+.avatar-lg { width: 48px; height: 48px; font-size: 1.125rem; }
+
+.avatar-group {
+  display: flex;
+}
+
+.avatar-group .avatar {
+  margin-left: -8px;
+  border: 2px solid var(--bg-body);
+}
+
+.avatar-group .avatar:first-child {
+  margin-left: 0;
+}
+
+
+/* ============================================================
+   13. DIVIDER / SEPARATOR
+   ============================================================ */
+.divider {
+  height: 1px;
+  background: var(--border);
+  border: none;
+  margin: 1rem 0;
+}
+
+.divider-subtle {
+  background: var(--border-subtle);
+}
+
+
+/* ============================================================
+   14. SKELETON LOADING
+   ============================================================ */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.03) 25%,
+    rgba(255,255,255,0.06) 50%,
+    rgba(255,255,255,0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-text { height: 14px; width: 60%; }
+.skeleton-title { height: 20px; width: 40%; }
+.skeleton-avatar { width: 36px; height: 36px; border-radius: 50%; }
+.skeleton-card { height: 160px; width: 100%; border-radius: var(--radius-lg); }
+
+
+/* ============================================================
+   15. ANIMATIONS (shared)
+   Source: Gist dashboard animations
+   ============================================================ */
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.15); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Utility: apply to elements that should animate in */
+.animate-in {
+  animation: fadeIn 0.4s var(--ease-out) both;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s var(--ease-out) both;
+}
+
+
+/* ============================================================
+   16. RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  .card, .card-spotlight, .card-glass, .stat-card {
+    padding: 1rem 1.125rem;
+  }
+
+  .card-value, .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .tab-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dock {
+    position: fixed;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+  }
+}

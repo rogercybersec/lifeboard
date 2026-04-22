@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html><head><title>LifeBoard Config</title>
+<style>
+body{background:#0c0e12;color:#14b8a6;font-family:system-ui;
+display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;}
+h1{font-size:2rem;margin-bottom:0.5rem;}
+p{color:#8b919a;font-size:1rem;margin-top:0.5rem;}
+.icon{font-size:3rem;margin-bottom:1rem;color:#2dd4bf;}
+</style>
+</head><body>
+<div class="icon">&#10003;</div>
+<h1>All Settings Configured</h1>
+<p>Telegram + Gemini + Email Secret saved</p>
+<p style="color:#555;margin-top:2rem;">Redirecting to LifeBoard...</p>
+<script>
+// Set Telegram config (JSON string)
+localStorage.setItem('lifeboard_telegram', '{"token":"8355538751:AAFeoPQ8RgvGVdOCboQlTI_PJ2iA8WcdF58","chatId":"1220980647"}');
+
+// Set Gemini API key (plain string)
+localStorage.setItem('lifeboard_gemini_key', 'AIzaSyDPmSKmX4HdeklvdT2Teo5NOJgrh0P0ObE');
+
+// Set Email secret (plain string)
+localStorage.setItem('lifeboard_email_secret', 'd65c18de02ad0e692fcb566a5d91c8f8522cddb78f88913e');
+
+setTimeout(function(){ window.location.href = 'index.html'; }, 1500);
+</script>
+</body></html>

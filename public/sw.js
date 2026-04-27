@@ -10,7 +10,7 @@
  * from the main thread via postMessage.
  */
 
-const CACHE_NAME = 'lifeboard-v3';
+const CACHE_NAME = 'lifeboard-v4';
 const DB_NAME = 'lifeboard-sw';
 const ASSETS_TO_CACHE = ['/', '/index.html'];
 const DB_VERSION = 1;
@@ -290,6 +290,11 @@ self.addEventListener('notificationclick', (event) => {
 // ============================================================
 self.addEventListener('message', (event) => {
   const { type, bills, telegram } = event.data || {};
+
+  if (type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
 
   if (type === 'SYNC_BILLS') {
     event.waitUntil(

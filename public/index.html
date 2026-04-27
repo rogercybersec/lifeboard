@@ -1434,11 +1434,12 @@ const DEFAULT_BILLS = [];
 
 // ONE-TIME MIGRATION: Nuke any old fake/demo bills from localStorage
 (function() {
-  const MIGRATION_KEY = 'lifeboard_fake_data_purged_v2';
+  const MIGRATION_KEY = 'lifeboard_fake_data_purged_v3';
   if (!localStorage.getItem(MIGRATION_KEY)) {
     localStorage.removeItem('lifeboard_bills');
     localStorage.removeItem('lifeboard_alerts');
     localStorage.removeItem('lifeboard_sent');
+    localStorage.removeItem('lifeboard_fake_data_purged_v2');
     localStorage.setItem(MIGRATION_KEY, Date.now().toString());
   }
 })();
@@ -2957,18 +2958,25 @@ async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
 
   try {
-    const reg = await navigator.serviceWorker.register('/sw.js');
+    const swUrl = '/sw.js?v=' + Date.now();
+    const reg = await navigator.serviceWorker.register(swUrl);
     console.log('[LifeBoard] Service Worker registered');
 
     reg.addEventListener('updatefound', () => {
       const newWorker = reg.installing;
+      if (!newWorker) return;
       newWorker.addEventListener('statechange', () => {
         if (newWorker.state === 'activated') {
+          console.log('[LifeBoard] New SW activated — reloading');
           window.location.reload();
         }
       });
     });
-    setInterval(() => reg.update(), 5 * 60 * 1000);
+    if (reg.waiting) {
+      reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    }
+    reg.update();
+    setInterval(() => reg.update(), 2 * 60 * 1000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update(); });
 
     if ('periodicSync' in reg) {

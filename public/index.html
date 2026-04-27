@@ -255,6 +255,9 @@ tbody tr.row-due-soon{background:rgba(245,158,11,0.03);}
 .cal-event-chip.event-work{background:rgba(59,130,246,0.1);color:#93c5fd;border-left:2px solid #3b82f6;}
 .cal-event-chip.event-health{background:rgba(236,72,153,0.1);color:#f9a8d4;border-left:2px solid #ec4899;}
 .cal-event-chip.event-social{background:rgba(245,158,11,0.1);color:#fcd34d;border-left:2px solid #f59e0b;}
+.cal-event-chip.event-job{background:rgba(99,102,241,0.12);color:#a5b4fc;border-left:2px solid #6366f1;}
+.cal-event-chip.event-deadline{background:rgba(239,68,68,0.12);color:#fca5a5;border-left:2px solid #ef4444;}
+.cal-event-chip.event-project{background:rgba(14,165,233,0.12);color:#7dd3fc;border-left:2px solid #0ea5e9;}
 .cal-event-more{font-size:0.58rem;color:var(--text-muted);padding:1px 5px;cursor:pointer;}
 .cal-dots-row{display:none;gap:3px;flex-wrap:wrap;justify-content:center;}
 .cal-dot{width:5px;height:5px;border-radius:50%;}
@@ -262,6 +265,9 @@ tbody tr.row-due-soon{background:rgba(245,158,11,0.03);}
 .cal-dot.pending{background:var(--warning);}
 .cal-dot.paid{background:var(--success);}
 .cal-dot.event{background:#8b5cf6;}
+.cal-dot.job{background:#6366f1;}
+.cal-dot.deadline{background:#ef4444;}
+.cal-dot.project{background:#0ea5e9;}
 
 /* Calendar Sidebar */
 .cal-sidebar{border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--bg-body);overflow-y:auto;}
@@ -283,6 +289,9 @@ tbody tr.row-due-soon{background:rgba(245,158,11,0.03);}
 .cal-detail-bar.event-work{background:#3b82f6;}
 .cal-detail-bar.event-health{background:#ec4899;}
 .cal-detail-bar.event-social{background:#f59e0b;}
+.cal-detail-bar.event-job{background:#6366f1;}
+.cal-detail-bar.event-deadline{background:#ef4444;}
+.cal-detail-bar.event-project{background:#0ea5e9;}
 .cal-detail-info{flex:1;min-width:0;}
 .cal-detail-name{font-size:0.82rem;font-weight:600;color:var(--text-primary);margin-bottom:2px;}
 .cal-detail-meta{font-size:0.7rem;color:var(--text-muted);display:flex;align-items:center;gap:6px;}
@@ -615,6 +624,7 @@ tbody tr.row-due-soon{background:rgba(245,158,11,0.03);}
       <button class="nav-tab" onclick="showPage('bills',this)">Bills</button>
       <button class="nav-tab" onclick="showPage('calendar',this)">Calendar</button>
       <button class="nav-tab" onclick="showPage('secretary',this)">Secretary</button>
+      <button class="nav-tab" onclick="showPage('banking',this)">Banking</button>
       <button class="nav-tab" onclick="showPage('settings',this)">Settings</button>
     </div>
     <div class="topbar-right">
@@ -778,6 +788,9 @@ tbody tr.row-due-soon{background:rgba(245,158,11,0.03);}
               <option value="work">Work</option>
               <option value="health">Health</option>
               <option value="social">Social</option>
+              <option value="job">Job / Interview</option>
+              <option value="deadline">Deadline</option>
+              <option value="project">Project</option>
             </select>
           </div>
           <div class="form-group">
@@ -871,6 +884,140 @@ tbody tr.row-due-soon{background:rgba(245,158,11,0.03);}
     </div>
 
     <!-- SETTINGS PAGE -->
+    <!-- BANKING PAGE -->
+    <div id="page-banking" class="page">
+      <div class="kpi-grid" id="bankingKpiGrid">
+        <div class="kpi-card">
+          <div class="kpi-label">This Month Spent</div>
+          <div class="kpi-value mono" id="bankTotalSpent">$0</div>
+          <div class="kpi-sub" id="bankSpentSub">Connect bank to see</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Budget Remaining</div>
+          <div class="kpi-value mono" id="bankBudgetLeft">$0</div>
+          <div class="kpi-sub" id="bankBudgetSub">Set a budget below</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Recurring Detected</div>
+          <div class="kpi-value mono" id="bankRecurringCount">0</div>
+          <div class="kpi-sub" id="bankRecurringSub">Auto-detected payments</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Potential Savings</div>
+          <div class="kpi-value mono" id="bankSavings">$0</div>
+          <div class="kpi-sub" id="bankSavingsSub">Run AI analysis</div>
+        </div>
+      </div>
+
+      <!-- Bank Connection -->
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div class="card" id="bankConnectionCard">
+          <div class="card-header">
+            <div class="card-title">Open Banking (CDR)</div>
+            <div id="bankStatus" class="badge pending"><span class="badge-dot"></span>Not Connected</div>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:12px;">Connect your Australian bank account securely via the Consumer Data Right (CDR). Your data stays private — we only read transactions.</p>
+          <div id="bankConnectionUI">
+            <button class="btn btn-primary" onclick="connectBank()" id="connectBankBtn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v4"/><path d="M12 14v4"/><path d="M16 14v4"/></svg>
+              Connect Bank Account
+            </button>
+          </div>
+          <div id="bankConnections" style="display:none;margin-top:12px;"></div>
+        </div>
+
+        <!-- Budget Goals -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Monthly Budget Goals</div>
+            <button class="btn btn-ghost btn-sm" onclick="saveBudgetGoals()">Save</button>
+          </div>
+          <div id="budgetGoalsForm" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="budget-goal-row">
+              <label class="label">Housing</label>
+              <input type="number" class="budget-input" data-cat="housing" placeholder="$0" style="width:100%;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:inherit;font-size:0.8rem;">
+            </div>
+            <div class="budget-goal-row">
+              <label class="label">Groceries</label>
+              <input type="number" class="budget-input" data-cat="groceries" placeholder="$0" style="width:100%;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:inherit;font-size:0.8rem;">
+            </div>
+            <div class="budget-goal-row">
+              <label class="label">Transport</label>
+              <input type="number" class="budget-input" data-cat="transport" placeholder="$0" style="width:100%;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:inherit;font-size:0.8rem;">
+            </div>
+            <div class="budget-goal-row">
+              <label class="label">Dining</label>
+              <input type="number" class="budget-input" data-cat="dining" placeholder="$0" style="width:100%;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:inherit;font-size:0.8rem;">
+            </div>
+            <div class="budget-goal-row">
+              <label class="label">Entertainment</label>
+              <input type="number" class="budget-input" data-cat="entertainment" placeholder="$0" style="width:100%;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:inherit;font-size:0.8rem;">
+            </div>
+            <div class="budget-goal-row">
+              <label class="label">Subscriptions</label>
+              <input type="number" class="budget-input" data-cat="subscriptions" placeholder="$0" style="width:100%;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:inherit;font-size:0.8rem;">
+            </div>
+            <div class="budget-goal-row">
+              <label class="label">Utilities</label>
+              <input type="number" class="budget-input" data-cat="utilities" placeholder="$0" style="width:100%;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:inherit;font-size:0.8rem;">
+            </div>
+            <div class="budget-goal-row">
+              <label class="label">Other</label>
+              <input type="number" class="budget-input" data-cat="other" placeholder="$0" style="width:100%;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:inherit;font-size:0.8rem;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Spending Breakdown -->
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Spending by Category</div>
+            <button class="btn btn-ghost btn-sm" onclick="refreshTransactions()">Refresh</button>
+          </div>
+          <div id="spendingBreakdown" style="font-size:0.8rem;color:var(--text-secondary);">
+            <p style="color:var(--text-muted);font-size:0.78rem;">Connect your bank to see spending breakdown.</p>
+          </div>
+        </div>
+
+        <!-- Budget Progress Bars -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Budget vs Actual</div>
+          </div>
+          <div id="budgetProgress" style="font-size:0.8rem;color:var(--text-secondary);">
+            <p style="color:var(--text-muted);font-size:0.78rem;">Set budget goals and connect bank to track.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recurring Payments & Negotiation -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recurring Payments Detected</div>
+          </div>
+          <div id="recurringList" style="font-size:0.8rem;">
+            <p style="color:var(--text-muted);font-size:0.78rem;">Transactions will be analysed for recurring patterns.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">AI Savings Suggestions</div>
+            <button class="btn btn-primary btn-sm" onclick="getAISavings()" id="aiSavingsBtn">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              Analyse
+            </button>
+          </div>
+          <div id="savingsSuggestions" style="font-size:0.8rem;">
+            <p style="color:var(--text-muted);font-size:0.78rem;">Click Analyse to get AI-powered savings tips based on your spending.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="page-settings" class="page">
       <div class="grid-2">
         <div class="card">
@@ -986,6 +1133,10 @@ tbody tr.row-due-soon{background:rgba(245,158,11,0.03);}
       <button class="mobile-tab" data-page="secretary" onclick="showPage('secretary',this)">
         <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 00-3 3v4a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v1a7 7 0 01-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
         <span>Secretary</span>
+      </button>
+      <button class="mobile-tab" data-page="banking" onclick="showPage('banking',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v4"/><path d="M12 14v4"/><path d="M16 14v4"/></svg>
+        <span>Banking</span>
       </button>
       <button class="mobile-tab" data-page="settings" onclick="showPage('settings',this)">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -1424,7 +1575,7 @@ function showPage(page, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   document.querySelectorAll('.nav-tab').forEach((t,i) => {
-    t.classList.toggle('active', ['dashboard','bills','calendar','secretary','settings'][i] === page);
+    t.classList.toggle('active', ['dashboard','bills','calendar','secretary','banking','settings'][i] === page);
   });
   document.querySelectorAll('.mobile-tab').forEach(t => {
     t.classList.toggle('active', t.dataset.page === page);
@@ -1434,6 +1585,7 @@ function showPage(page, el) {
   if (page === 'bills') renderBills();
   if (page === 'calendar') renderCalendar();
   if (page === 'secretary') renderSecretary();
+  if (page === 'banking') renderBanking();
   if (page === 'settings') loadSettings();
 }
 
@@ -2816,7 +2968,8 @@ async function registerServiceWorker() {
         }
       });
     });
-    setInterval(() => reg.update(), 30 * 60 * 1000);
+    setInterval(() => reg.update(), 5 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update(); });
 
     if ('periodicSync' in reg) {
       try {
@@ -3426,6 +3579,397 @@ setTimeout(() => {
     });
   }
 }, 3000);
+
+// ============================================================
+// Banking — Open Banking + Budget + AI Savings
+// ============================================================
+const BANKING_STORAGE = {
+  userId: 'lifeboard_basiq_userId',
+  transactions: 'lifeboard_transactions',
+  recurring: 'lifeboard_recurring',
+  budgetGoals: 'lifeboard_budget_goals',
+  savings: 'lifeboard_savings'
+};
+
+function getBankingAuth() {
+  const syncSecret = localStorage.getItem('lifeboard_sync_secret') || '';
+  return syncSecret ? { 'Authorization': 'Bearer ' + syncSecret } : {};
+}
+
+function getApiBase() {
+  return '';
+}
+
+async function connectBank() {
+  const btn = document.getElementById('connectBankBtn');
+  btn.disabled = true;
+  btn.textContent = 'Connecting...';
+
+  try {
+    const resp = await fetch(getApiBase() + '/api/banking/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getBankingAuth() },
+      body: JSON.stringify({ email: '' })
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      if (data.configured === false) {
+        btn.textContent = 'Open Banking Not Configured';
+        btn.disabled = false;
+        addAlert('Open Banking (Basiq) API key not configured on server', 'error');
+        return;
+      }
+      throw new Error(data.error || 'Connection failed');
+    }
+
+    localStorage.setItem(BANKING_STORAGE.userId, data.userId);
+
+    if (data.consentUrl) {
+      window.open(data.consentUrl, '_blank');
+      btn.textContent = 'Complete in bank window...';
+      addAlert('Bank consent window opened. Complete verification there.', 'pending');
+      pollBankConnection(data.userId);
+    }
+  } catch (e) {
+    console.error('Connect bank error:', e);
+    btn.textContent = 'Connect Bank Account';
+    btn.disabled = false;
+    addAlert('Bank connection failed: ' + e.message, 'error');
+  }
+}
+
+async function pollBankConnection(userId) {
+  let attempts = 0;
+  const poll = setInterval(async () => {
+    attempts++;
+    if (attempts > 30) {
+      clearInterval(poll);
+      document.getElementById('connectBankBtn').textContent = 'Connect Bank Account';
+      document.getElementById('connectBankBtn').disabled = false;
+      return;
+    }
+    try {
+      const resp = await fetch(getApiBase() + '/api/banking/connect?userId=' + encodeURIComponent(userId), {
+        headers: getBankingAuth()
+      });
+      const data = await resp.json();
+      if (data.connected) {
+        clearInterval(poll);
+        addAlert('Bank connected successfully!', 'sent');
+        renderBanking();
+      }
+    } catch (e) { /* silent retry */ }
+  }, 10000);
+}
+
+async function renderBanking() {
+  const userId = localStorage.getItem(BANKING_STORAGE.userId);
+
+  const goals = JSON.parse(localStorage.getItem(BANKING_STORAGE.budgetGoals) || '{}');
+  document.querySelectorAll('.budget-input').forEach(input => {
+    const cat = input.dataset.cat;
+    if (goals[cat]) input.value = goals[cat];
+  });
+
+  if (!userId) {
+    document.getElementById('bankStatus').innerHTML = '<span class="badge-dot"></span>Not Connected';
+    document.getElementById('bankStatus').className = 'badge pending';
+    document.getElementById('bankConnectionUI').style.display = 'block';
+    document.getElementById('bankConnections').style.display = 'none';
+    renderBankingFromCache();
+    await loadBudgetComparison();
+    return;
+  }
+
+  try {
+    const resp = await fetch(getApiBase() + '/api/banking/connect?userId=' + encodeURIComponent(userId), {
+      headers: getBankingAuth()
+    });
+    const data = await resp.json();
+
+    if (data.connected) {
+      document.getElementById('bankStatus').innerHTML = '<span class="badge-dot"></span>Connected';
+      document.getElementById('bankStatus').className = 'badge paid';
+      document.getElementById('bankConnectionUI').style.display = 'none';
+      document.getElementById('bankConnections').style.display = 'block';
+
+      const connHtml = data.connections.map(c =>
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">' +
+          '<div>' +
+            '<div style="font-size:0.8rem;font-weight:500;color:var(--text-primary);">' + escapeHtml(c.institution) + '</div>' +
+            '<div style="font-size:0.7rem;color:var(--text-muted);">Last synced: ' + (c.lastUsed ? new Date(c.lastUsed).toLocaleDateString() : 'N/A') + '</div>' +
+          '</div>' +
+          '<span class="badge paid"><span class="badge-dot"></span>Active</span>' +
+        '</div>'
+      ).join('');
+      document.getElementById('bankConnections').innerHTML = connHtml;
+
+      await refreshTransactions();
+    } else {
+      document.getElementById('bankStatus').innerHTML = '<span class="badge-dot"></span>Pending';
+      document.getElementById('bankStatus').className = 'badge due-soon';
+    }
+  } catch (e) {
+    console.error('Banking status check error:', e);
+  }
+
+  renderBankingFromCache();
+  await loadBudgetComparison();
+}
+
+function renderBankingFromCache() {
+  const txData = JSON.parse(localStorage.getItem(BANKING_STORAGE.transactions) || 'null');
+  const recurring = JSON.parse(localStorage.getItem(BANKING_STORAGE.recurring) || '[]');
+  const savings = JSON.parse(localStorage.getItem(BANKING_STORAGE.savings) || '[]');
+
+  if (txData) {
+    renderSpendingBreakdown(txData.spending);
+    document.getElementById('bankTotalSpent').textContent = '$' + Object.values(txData.spending || {}).reduce(function(a, b) { return a + b.total; }, 0).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    document.getElementById('bankSpentSub').textContent = txData.totalTransactions + ' transactions';
+  }
+
+  if (recurring.length > 0) {
+    renderRecurringList(recurring);
+    document.getElementById('bankRecurringCount').textContent = recurring.length;
+    document.getElementById('bankRecurringSub').textContent = recurring.length + ' patterns found';
+  }
+
+  if (savings.length > 0) {
+    renderSavingsSuggestions(savings);
+    var totalSavings = savings.reduce(function(a, s) { return a + (s.annualSavings || 0); }, 0);
+    document.getElementById('bankSavings').textContent = '$' + totalSavings.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    document.getElementById('bankSavingsSub').textContent = 'per year potential';
+  }
+}
+
+async function refreshTransactions() {
+  var userId = localStorage.getItem(BANKING_STORAGE.userId);
+  if (!userId) return;
+
+  try {
+    var resp = await fetch(getApiBase() + '/api/banking/transactions?userId=' + encodeURIComponent(userId), {
+      headers: getBankingAuth()
+    });
+    if (!resp.ok) throw new Error('Failed to fetch');
+    var data = await resp.json();
+
+    localStorage.setItem(BANKING_STORAGE.transactions, JSON.stringify(data));
+    localStorage.setItem(BANKING_STORAGE.recurring, JSON.stringify(data.recurring || []));
+
+    renderSpendingBreakdown(data.spending);
+    renderRecurringList(data.recurring || []);
+
+    var totalSpent = Object.values(data.spending || {}).reduce(function(a, b) { return a + b.total; }, 0);
+    document.getElementById('bankTotalSpent').textContent = '$' + totalSpent.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    document.getElementById('bankSpentSub').textContent = data.totalTransactions + ' transactions (' + data.period.from + ' to ' + data.period.to + ')';
+    document.getElementById('bankRecurringCount').textContent = (data.recurring || []).length;
+
+    autoImportRecurring(data.recurring || []);
+    addAlert('Transactions refreshed: ' + data.totalTransactions + ' loaded', 'sent');
+  } catch (e) {
+    console.error('Transaction refresh error:', e);
+    addAlert('Failed to refresh transactions', 'error');
+  }
+}
+
+function renderSpendingBreakdown(spending) {
+  if (!spending || Object.keys(spending).length === 0) {
+    document.getElementById('spendingBreakdown').innerHTML = '<p style="color:var(--text-muted);font-size:0.78rem;">No spending data yet.</p>';
+    return;
+  }
+
+  var sorted = Object.entries(spending).sort(function(a, b) { return b[1].total - a[1].total; });
+  var maxTotal = sorted[0] ? sorted[0][1].total : 1;
+  var catColors = {
+    housing: '#ef4444', groceries: '#10b981', dining: '#f59e0b', transport: '#3b82f6',
+    utilities: '#8b5cf6', subscriptions: '#ec4899', entertainment: '#06b6d4', health: '#14b8a6',
+    shopping: '#f97316', insurance: '#6366f1', telecom: '#84cc16', income: '#22c55e',
+    transfer: '#a1a1aa', fees: '#ef4444', other: '#71717a'
+  };
+
+  var html = sorted.map(function(entry) {
+    var cat = entry[0], data = entry[1];
+    var pct = Math.round((data.total / maxTotal) * 100);
+    var color = catColors[cat] || '#71717a';
+    return '<div style="margin-bottom:10px;">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:3px;">' +
+        '<span style="font-size:0.78rem;font-weight:500;color:var(--text-primary);text-transform:capitalize;">' + cat + '</span>' +
+        '<span class="mono" style="font-size:0.78rem;color:var(--text-secondary);">$' + data.total.toLocaleString('en-AU', { minimumFractionDigits: 2 }) + ' (' + data.count + ')</span>' +
+      '</div>' +
+      '<div style="height:6px;background:var(--bg-body);border-radius:3px;overflow:hidden;">' +
+        '<div style="height:100%;width:' + pct + '%;background:' + color + ';border-radius:3px;transition:width 0.4s ease;"></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('spendingBreakdown').innerHTML = html;
+}
+
+function renderRecurringList(recurring) {
+  if (!recurring || recurring.length === 0) {
+    document.getElementById('recurringList').innerHTML = '<p style="color:var(--text-muted);font-size:0.78rem;">No recurring patterns detected yet.</p>';
+    return;
+  }
+
+  var html = recurring.slice(0, 15).map(function(r) {
+    var confidence = Math.round(r.confidence * 100);
+    var confColor = confidence >= 80 ? 'var(--success)' : confidence >= 50 ? 'var(--warning)' : 'var(--text-muted)';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-subtle);">' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:0.78rem;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(r.description) + '</div>' +
+        '<div style="font-size:0.68rem;color:var(--text-muted);">' + r.frequency + ' &middot; next: ' + r.nextExpectedDate + '</div>' +
+      '</div>' +
+      '<div style="text-align:right;margin-left:12px;">' +
+        '<div class="mono" style="font-size:0.8rem;font-weight:600;color:var(--text-primary);">$' + r.avgAmount.toFixed(2) + '</div>' +
+        '<div style="font-size:0.65rem;color:' + confColor + ';">' + confidence + '% confidence</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('recurringList').innerHTML = html;
+}
+
+async function getAISavings() {
+  var btn = document.getElementById('aiSavingsBtn');
+  btn.disabled = true;
+  btn.textContent = 'Analysing...';
+
+  try {
+    var resp = await fetch(getApiBase() + '/api/banking/budget?action=negotiate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getBankingAuth() }
+    });
+
+    var data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Analysis failed');
+
+    var suggestions = data.suggestions || [];
+    localStorage.setItem(BANKING_STORAGE.savings, JSON.stringify(suggestions));
+
+    renderSavingsSuggestions(suggestions);
+
+    var totalSavings = suggestions.reduce(function(a, s) { return a + (s.annualSavings || 0); }, 0);
+    document.getElementById('bankSavings').textContent = '$' + totalSavings.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    document.getElementById('bankSavingsSub').textContent = 'per year potential';
+
+    addAlert('AI savings analysis: $' + totalSavings + '/yr potential', 'sent');
+  } catch (e) {
+    console.error('AI savings error:', e);
+    addAlert('Savings analysis failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Analyse';
+  }
+}
+
+function renderSavingsSuggestions(suggestions) {
+  if (!suggestions || suggestions.length === 0) {
+    document.getElementById('savingsSuggestions').innerHTML = '<p style="color:var(--text-muted);font-size:0.78rem;">No suggestions yet. Click Analyse.</p>';
+    return;
+  }
+
+  var difficultyColors = { easy: 'var(--success)', medium: 'var(--warning)', hard: 'var(--critical)' };
+
+  var html = suggestions.map(function(s) {
+    return '<div style="padding:10px 0;border-bottom:1px solid var(--border-subtle);">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">' +
+        '<div style="font-size:0.8rem;font-weight:600;color:var(--text-primary);">' + escapeHtml(s.title) + '</div>' +
+        '<span class="mono" style="font-size:0.78rem;font-weight:600;color:var(--success);white-space:nowrap;margin-left:8px;">$' + (s.annualSavings || 0).toLocaleString() + '/yr</span>' +
+      '</div>' +
+      '<p style="font-size:0.74rem;color:var(--text-secondary);line-height:1.5;margin-bottom:4px;">' + escapeHtml(s.description) + '</p>' +
+      '<div style="display:flex;gap:8px;align-items:center;">' +
+        '<span style="font-size:0.65rem;color:' + (difficultyColors[s.difficulty] || 'var(--text-muted)') + ';text-transform:uppercase;font-weight:600;">' + (s.difficulty || 'medium') + '</span>' +
+        (s.action ? '<span style="font-size:0.68rem;color:var(--text-muted);">&rarr; ' + escapeHtml(s.action) + '</span>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('savingsSuggestions').innerHTML = html;
+}
+
+async function saveBudgetGoals() {
+  var goals = {};
+  document.querySelectorAll('.budget-input').forEach(function(input) {
+    var val = parseFloat(input.value);
+    if (val > 0) goals[input.dataset.cat] = val;
+  });
+
+  localStorage.setItem(BANKING_STORAGE.budgetGoals, JSON.stringify(goals));
+
+  try {
+    await fetch(getApiBase() + '/api/banking/budget', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getBankingAuth() },
+      body: JSON.stringify({ goals: goals })
+    });
+    addAlert('Budget goals saved', 'sent');
+  } catch (e) {
+    console.error('Save budget error:', e);
+  }
+
+  await loadBudgetComparison();
+}
+
+async function loadBudgetComparison() {
+  try {
+    var resp = await fetch(getApiBase() + '/api/banking/budget', {
+      headers: getBankingAuth()
+    });
+    if (!resp.ok) return;
+    var data = await resp.json();
+
+    if (data.summary) {
+      document.getElementById('bankBudgetLeft').textContent = '$' + Math.max(0, data.summary.remaining).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      document.getElementById('bankBudgetSub').textContent = data.summary.daysLeft + ' days left this month';
+    }
+
+    renderBudgetProgress(data.comparison || {});
+  } catch (e) { /* silent */ }
+}
+
+function renderBudgetProgress(comparison) {
+  var el = document.getElementById('budgetProgress');
+  var entries = Object.entries(comparison).filter(function(e) { return e[1].budgeted > 0; });
+
+  if (entries.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:0.78rem;">Set budget goals to see comparison.</p>';
+    return;
+  }
+
+  var html = entries.map(function(entry) {
+    var cat = entry[0], d = entry[1];
+    var pct = Math.min(d.percentUsed || 0, 150);
+    var barColor = d.overBudget ? 'var(--critical)' : pct > 80 ? 'var(--warning)' : 'var(--accent)';
+    return '<div style="margin-bottom:10px;">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:3px;">' +
+        '<span style="font-size:0.78rem;font-weight:500;color:var(--text-primary);text-transform:capitalize;">' + cat + '</span>' +
+        '<span class="mono" style="font-size:0.72rem;color:' + (d.overBudget ? 'var(--critical)' : 'var(--text-secondary)') + ';">' +
+          '$' + d.spent.toFixed(0) + ' / $' + d.budgeted.toFixed(0) + (d.overBudget ? ' ⚠' : '') +
+        '</span>' +
+      '</div>' +
+      '<div style="height:6px;background:var(--bg-body);border-radius:3px;overflow:hidden;">' +
+        '<div style="height:100%;width:' + Math.min(pct, 100) + '%;background:' + barColor + ';border-radius:3px;transition:width 0.4s ease;"></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  el.innerHTML = html;
+}
+
+function autoImportRecurring(recurring) {
+  var bills = JSON.parse(localStorage.getItem('lifeboard_bills') || '[]');
+  var billNames = bills.map(function(b) { return b.name.toLowerCase(); });
+  var newRecurring = recurring.filter(function(r) {
+    return r.confidence >= 0.7 &&
+      !billNames.some(function(n) { return r.description.toLowerCase().includes(n) || n.includes(r.normalizedKey); });
+  });
+
+  if (newRecurring.length > 0) {
+    addAlert(newRecurring.length + ' recurring payment(s) detected that aren\'t in your bills yet', 'pending');
+  }
+}
 
 
 </script>

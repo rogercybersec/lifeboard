@@ -10,8 +10,9 @@
  * from the main thread via postMessage.
  */
 
-const CACHE_NAME = 'lifeboard-v2';
+const CACHE_NAME = 'lifeboard-v3';
 const DB_NAME = 'lifeboard-sw';
+const ASSETS_TO_CACHE = ['/', '/index.html'];
 const DB_VERSION = 1;
 const STORE_BILLS = 'bills';
 const STORE_CONFIG = 'config';
@@ -209,7 +210,22 @@ async function checkBills() {
 // Service Worker lifecycle
 // ============================================================
 self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
+  );
   self.skipWaiting();
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  if (event.request.url.includes('/api/')) return;
+  event.respondWith(
+    fetch(event.request).then((response) => {
+      const clone = response.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+      return response;
+    }).catch(() => caches.match(event.request))
+  );
 });
 
 self.addEventListener('activate', (event) => {

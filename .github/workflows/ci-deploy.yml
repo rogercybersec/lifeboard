@@ -60,7 +60,7 @@ jobs:
       - name: Scan for hardcoded secrets
         run: |
           FOUND=0
-          for pattern in 'AKIA[0-9A-Z]{16}' 'sk-[a-zA-Z0-9]{48}' 'ghp_[a-zA-Z0-9]{36}' 'AIza[0-9A-Za-z_-]{35}'; do
+          for pattern in 'AKIA[0-9A-Z]{16}' 'sk-[a-zA-Z0-9]{48}' 'ghp_[a-zA-Z0-9]{36}' 'AIza[0-9A-Za-z_-]{35}' '[0-9]{8,10}:[A-Za-z0-9_-]{35}'; do
             if grep -rnE "$pattern" public/ api/ 2>/dev/null; then
               echo "::error::Potential secret found matching $pattern"
               FOUND=1
@@ -79,46 +79,32 @@ jobs:
           done
           echo "✅ No sensitive files in repo"
 
-  deploy:
-    name: Deploy to Vercel
+  merge_gate:
+    name: Merge Gate
     runs-on: ubuntu-latest
     needs: [validate, security]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - name: All quality gates passed
+        run: echo "✅ All quality gates passed. Safe to merge."
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-
-      - name: Pull Vercel config
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy to production
-        id: deploy
+  deploy_check:
+    name: Deploy Ready
+    runs-on: ubuntu-latest
+    needs: [validate, security]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Verified
         run: |
-          URL=$(vercel --prod --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | tail -1)
-          echo "url=$URL" >> $GITHUB_OUTPUT
-          echo "Deployed to: $URL"
-
-      - name: Verify deployment
-        run: |
-          sleep 5
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://lifeboard-pied-nine.vercel.app")
-          if [ "$STATUS" != "200" ]; then
-            echo "::warning::Deployment health check returned $STATUS"
-          else
-            echo "✅ Deployment healthy (HTTP $STATUS)"
-          fi
+          echo "============================================"
+          echo "  ✅ ALL CHECKS PASSED — DEPLOY READY"
+          echo "  Vercel auto-deploys this commit."
+          echo "============================================"
 
   notify:
     name: Notify
     runs-on: ubuntu-latest
-    needs: [validate, security, deploy]
+    needs: [validate, security]
     if: always() && github.ref == 'refs/heads/main'
     steps:
       - name: Determine result
@@ -129,25 +115,19 @@ jobs:
             echo "detail=Validation failed" >> $GITHUB_OUTPUT
           elif [[ "${{ needs.security.result }}" == "failure" ]]; then
             echo "status=❌ FAILED" >> $GITHUB_OUTPUT
-            echo "detail=Security scan failed" >> $GITHUB_OUTPUT
-          elif [[ "${{ needs.deploy.result }}" == "failure" ]]; then
-            echo "status=❌ FAILED" >> $GITHUB_OUTPUT
-            echo "detail=Deploy failed" >> $GITHUB_OUTPUT
-          elif [[ "${{ needs.deploy.result }}" == "skipped" ]]; then
-            echo "status=⏭️ SKIPPED" >> $GITHUB_OUTPUT
-            echo "detail=Deploy skipped (not main branch)" >> $GITHUB_OUTPUT
+            echo "detail=Security scan failed — secrets detected" >> $GITHUB_OUTPUT
           else
             echo "status=✅ PASSED" >> $GITHUB_OUTPUT
-            echo "detail=Validated + deployed to production" >> $GITHUB_OUTPUT
+            echo "detail=All checks passed — Vercel auto-deploying" >> $GITHUB_OUTPUT
           fi
 
       - name: Notify Telegram
         if: always()
         run: |
-          MSG="🏦 LifeBoard Pipeline ${{ steps.result.outputs.status }}
+          MSG="🏦 LifeBoard ${{ steps.result.outputs.status }}
           ${{ steps.result.outputs.detail }}
           Branch: ${{ github.ref_name }}
           Commit: $(echo ${{ github.sha }} | cut -c1-7)"
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -d text="$MSG" || echo "Telegram skipped (no token)"
+            -d text="$MSG" || echo "Telegram skipped"

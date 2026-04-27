@@ -129,8 +129,13 @@ a:hover{text-decoration:underline;}
 .kpi-card:nth-child(4)::after{background:var(--accent);}
 .kpi-card:nth-child(4):hover{box-shadow:var(--shadow-glow-accent);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px) scale(0.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes cardShine{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+.kpi-card.shine::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.03) 45%,rgba(255,255,255,0.06) 50%,rgba(255,255,255,0.03) 55%,transparent 60%);background-size:200% 100%;animation:cardShine 1.5s ease-out;pointer-events:none;border-radius:inherit;z-index:1;}
 .kpi-label{font-size:0.68rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;}
-.kpi-value{font-size:2rem;font-weight:600;letter-spacing:-0.04em;font-feature-settings:'tnum';font-family:'JetBrains Mono','Inter',monospace;color:var(--text-primary);line-height:1;display:inline-flex;overflow:hidden;}
+.kpi-value{font-size:2rem;font-weight:600;letter-spacing:-0.04em;font-feature-settings:'tnum';font-family:'JetBrains Mono','Inter',monospace;color:var(--text-primary);line-height:1;display:inline-flex;overflow:hidden;position:relative;}
+.kpi-digit-col{display:inline-flex;flex-direction:column;height:1em;overflow:hidden;position:relative;}
+.kpi-digit-strip{display:flex;flex-direction:column;transition:transform 0.8s cubic-bezier(0.16,1,0.3,1);}
+.kpi-digit-strip span{display:block;height:1em;line-height:1;}
 .kpi-sub{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:0.75rem;color:var(--text-secondary);}
 
 /* CARDS — Glass depth layers */
@@ -1657,26 +1662,38 @@ function renderKPIs() {
       '<div class="kpi-value" data-count="' + monthlyTotal.toFixed(0) + '">$' + monthlyTotal.toFixed(0) + '</div>' +
       '<div class="kpi-sub">$' + (monthlyTotal*12).toFixed(0) + '/year estimated <span class="kpi-sparkline"></span></div>' +
     '</div>';
-  // Count-up animation for KPI values
   animateKPICountUp();
+  document.querySelectorAll('.kpi-card').forEach(function(card, i) {
+    setTimeout(function() { card.classList.add('shine'); }, i * 150);
+    setTimeout(function() { card.classList.remove('shine'); }, 2000 + i * 150);
+  });
 }
 
 function animateKPICountUp() {
-  document.querySelectorAll('.kpi-value[data-count]').forEach(function(el) {
+  document.querySelectorAll('.kpi-value[data-count]').forEach(function(el, cardIdx) {
     var target = parseInt(el.dataset.count) || 0;
     if (target === 0) return;
-    var prefix = el.textContent.charAt(0) === '$' ? '$' : '';
-    var duration = 600;
-    var start = performance.now();
-    function step(now) {
-      var progress = Math.min((now - start) / duration, 1);
-      var eased = 1 - Math.pow(1 - progress, 3);
-      var current = Math.round(target * eased);
-      el.textContent = prefix + current;
-      if (progress < 1) requestAnimationFrame(step);
-      else el.textContent = prefix + target;
+    var text = el.textContent.trim();
+    var prefix = text.charAt(0) === '$' ? '$' : '';
+    var targetStr = target.toString();
+    var html = '';
+    if (prefix) html += '<span style="display:inline">' + prefix + '</span>';
+    for (var i = 0; i < targetStr.length; i++) {
+      var digit = parseInt(targetStr[i]);
+      var strip = '';
+      for (var d = 0; d <= 9; d++) strip += '<span>' + d + '</span>';
+      var delay = (cardIdx * 80) + (i * 60);
+      html += '<span class="kpi-digit-col"><span class="kpi-digit-strip" data-target="' + digit + '" style="transform:translateY(0);transition-delay:' + delay + 'ms;">' + strip + '</span></span>';
     }
-    requestAnimationFrame(step);
+    el.innerHTML = html;
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        el.querySelectorAll('.kpi-digit-strip').forEach(function(strip) {
+          var t = parseInt(strip.dataset.target);
+          strip.style.transform = 'translateY(-' + (t * 1) + 'em)';
+        });
+      });
+    });
   });
 }
 

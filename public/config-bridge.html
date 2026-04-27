@@ -13,15 +13,18 @@ p{color:#8b919a;font-size:1rem;margin-top:0.5rem;}
 <p>Telegram + Gemini + Email Secret saved</p>
 <p style="color:#555;margin-top:2rem;">Redirecting to LifeBoard...</p>
 <script>
-// Set Telegram config (JSON string)
-localStorage.setItem('lifeboard_telegram', '{"token":"8355538751:AAFeoPQ8RgvGVdOCboQlTI_PJ2iA8WcdF58","chatId":"1220980647"}');
-
-// Set Gemini API key (plain string)
-localStorage.setItem('lifeboard_gemini_key', 'AIzaSyDPmSKmX4HdeklvdT2Teo5NOJgrh0P0ObE');
-
-// Set Email secret (plain string)
-localStorage.setItem('lifeboard_email_secret', 'd65c18de02ad0e692fcb566a5d91c8f8522cddb78f88913e');
-
+// Config values are set via the Settings page in the app
+// This page is kept for backwards compatibility only
+var params = new URLSearchParams(window.location.search);
+if (params.get('tg_token') && params.get('tg_chat')) {
+  localStorage.setItem('lifeboard_telegram', JSON.stringify({token: params.get('tg_token'), chatId: params.get('tg_chat')}));
+}
+if (params.get('gemini_key')) {
+  localStorage.setItem('lifeboard_gemini_key', params.get('gemini_key'));
+}
+if (params.get('email_secret')) {
+  localStorage.setItem('lifeboard_email_secret', params.get('email_secret'));
+}
 setTimeout(function(){ window.location.href = 'index.html'; }, 1500);
 </script>
 </body></html>

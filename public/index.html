@@ -2990,16 +2990,19 @@ async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   var APP_VERSION = 'v6';
   var storedVersion = localStorage.getItem('lb-sw-version');
+  var needsNuke = (storedVersion !== APP_VERSION);
 
-  if (storedVersion && storedVersion !== APP_VERSION) {
-    console.log('[LifeBoard] Version mismatch (' + storedVersion + ' → ' + APP_VERSION + ') — nuking old SW + caches');
+  if (needsNuke) {
+    console.log('[LifeBoard] Force update (' + (storedVersion||'none') + ' → ' + APP_VERSION + ') — nuking ALL SW + caches');
     var regs = await navigator.serviceWorker.getRegistrations();
     for (var r of regs) { await r.unregister(); }
     var keys = await caches.keys();
     for (var k of keys) { await caches.delete(k); }
     localStorage.setItem('lb-sw-version', APP_VERSION);
-    window.location.reload();
-    return;
+    if (regs.length > 0 || keys.length > 0) {
+      window.location.reload();
+      return;
+    }
   }
   localStorage.setItem('lb-sw-version', APP_VERSION);
 

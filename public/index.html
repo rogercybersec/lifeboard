@@ -2990,7 +2990,7 @@ async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
 
   try {
-    const swUrl = '/sw.js?v=' + Date.now();
+    const swUrl = '/sw.js';
     const reg = await navigator.serviceWorker.register(swUrl);
     console.log('[LifeBoard] Service Worker registered');
 
@@ -2998,7 +2998,7 @@ async function registerServiceWorker() {
       const newWorker = reg.installing;
       if (!newWorker) return;
       newWorker.addEventListener('statechange', () => {
-        if (newWorker.state === 'activated') {
+        if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
           console.log('[LifeBoard] New SW activated — reloading');
           window.location.reload();
         }
@@ -3007,8 +3007,7 @@ async function registerServiceWorker() {
     if (reg.waiting) {
       reg.waiting.postMessage({ type: 'SKIP_WAITING' });
     }
-    reg.update();
-    setInterval(() => reg.update(), 2 * 60 * 1000);
+    setInterval(() => reg.update(), 10 * 60 * 1000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update(); });
 
     if ('periodicSync' in reg) {

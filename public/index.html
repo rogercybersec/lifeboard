@@ -355,6 +355,17 @@ tbody tr.row-due-soon:hover{background:rgba(245,158,11,0.06);}
 .cal-week-header{font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);text-align:center;padding:8px 0;border-bottom:1px solid var(--border);border-right:1px solid var(--border-subtle);}
 .cal-week-header.today{color:var(--accent);}
 .cal-week-event{position:absolute;left:2px;right:2px;padding:3px 5px;border-radius:4px;font-size:0.6rem;font-weight:500;z-index:2;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.cal-week-event.event-personal{background:rgba(139,92,246,0.08);color:#7C3AED;}
+.cal-week-event.event-work{background:rgba(59,130,246,0.08);color:#2563EB;}
+.cal-week-event.event-health{background:rgba(236,72,153,0.08);color:#DB2777;}
+.cal-week-event.event-social{background:rgba(245,158,11,0.08);color:#D97706;}
+.cal-week-event.event-job{background:rgba(99,91,255,0.08);color:var(--accent);}
+.cal-week-event.event-deadline{background:rgba(239,68,68,0.08);color:#DC2626;}
+.cal-week-event.event-project{background:rgba(14,165,233,0.08);color:#0284C7;}
+.cal-week-event.bill-overdue{background:rgba(239,68,68,0.1);color:#DC2626;}
+.cal-week-event.bill-pending{background:rgba(245,158,11,0.1);color:#D97706;}
+.cal-week-event.bill-paid{background:rgba(16,185,129,0.1);color:#059669;}
+.cal-week-event.bill-due-soon{background:rgba(99,91,255,0.08);color:var(--accent);}
 
 /* Event Modal */
 .cal-event-modal{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;align-items:center;justify-content:center;}
@@ -2359,12 +2370,15 @@ function renderWeekView() {
       items.events.filter(e => e.time).forEach(e => {
         const [h] = e.time.split(':').map(Number);
         if (h === hour) {
-          cellEvents += '<div class="cal-week-event event-' + e.category + '" style="top:2px;height:44px;background:rgba(139,92,246,0.15);color:#c4b5fd;">' + e.name + '</div>';
+          cellEvents += '<div class="cal-week-event event-' + e.category + '" style="top:2px;height:44px;">' + e.name + '</div>';
         }
       });
-      if (hour === 9) {
+      if (hour === 6) {
+        items.events.filter(e => !e.time).forEach(e => {
+          cellEvents += '<div class="cal-week-event event-' + e.category + '" style="top:2px;height:44px;">' + e.name + '</div>';
+        });
         items.bills.forEach(b => {
-          cellEvents += '<div class="cal-week-event ' + getBillStatus(b) + '" style="top:2px;height:44px;background:rgba(245,158,11,0.1);color:#fcd34d;">' + b.name + ' $' + b.amount.toFixed(0) + '</div>';
+          cellEvents += '<div class="cal-week-event ' + getBillStatus(b) + '" style="top:2px;height:44px;">' + b.name + ' $' + b.amount.toFixed(0) + '</div>';
         });
       }
       html += '<div class="cal-week-cell" onclick="selectCalDay(\'' + dateStr + '\')">' + cellEvents + '</div>';
@@ -3060,7 +3074,7 @@ document.addEventListener('keydown', function(e) {
 // ============================================================
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
-  var APP_VERSION = 'v8';
+  var APP_VERSION = 'v9';
   var storedVersion = localStorage.getItem('lb-sw-version');
   var needsNuke = (storedVersion !== APP_VERSION);
 

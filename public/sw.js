@@ -10,7 +10,7 @@
  * from the main thread via postMessage.
  */
 
-const CACHE_NAME = 'lifeboard-v8';
+const CACHE_NAME = 'lifeboard-v9';
 const DB_NAME = 'lifeboard-sw';
 const ASSETS_TO_CACHE = ['/', '/index.html'];
 const DB_VERSION = 1;

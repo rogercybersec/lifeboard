@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(osascript:*)",
+      "Bash(screencapture -x /tmp/roger-vscode-final.png)"
+    ]
+  }
+}

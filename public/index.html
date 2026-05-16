@@ -228,10 +228,10 @@ tbody tr.row-due-soon:hover{background:rgba(245,158,11,0.06);}
 .bill-name-cell .bill-notes{font-size:0.7rem;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;}
+.modal-overlay{position:fixed;inset:0;background:rgba(10,37,64,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;animation:fadeIn 0.25s ease;}
 .modal-overlay.open{display:flex;}
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-.modal{background:var(--bg-surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:modalIn 0.35s var(--ease-out);}
+.modal{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:20px;padding:28px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 25px 50px rgba(0,0,0,0.15),0 0 0 1px rgba(255,255,255,0.1) inset;animation:modalIn 0.4s var(--spring);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
 @keyframes modalIn{from{opacity:0;transform:translateY(12px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);}}
 .modal h3{font-size:1.08rem;font-weight:700;margin-bottom:20px;letter-spacing:-0.02em;color:var(--text-primary);}
 .form-group{margin-bottom:14px;}

@@ -146,7 +146,7 @@ a:hover{text-decoration:underline;}
 
 /* KPI GRID — Stripe/Linear style with left accent border */
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
-.kpi-card{background:var(--bg-surface);border:1px solid var(--border);border-left:2px solid transparent;border-radius:12px;padding:22px;transition:all 0.25s cubic-bezier(0.16,1,0.3,1);position:relative;overflow:hidden;will-change:transform;box-shadow:var(--shadow);}
+.kpi-card{background:var(--card-gradient);border:1px solid var(--border);border-left:3px solid transparent;border-radius:16px;padding:22px;transition:all 0.25s cubic-bezier(0.16,1,0.3,1);position:relative;overflow:hidden;will-change:transform;box-shadow:var(--shadow);backdrop-filter:blur(8px);}
 .kpi-card:hover{border-color:var(--border-hover);transform:translateY(-2px);box-shadow:var(--shadow-md);}
 .kpi-card:nth-child(1){animation:fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) backwards;border-left-color:var(--accent);}
 .kpi-card:nth-child(2){animation:fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.07s backwards;border-left-color:var(--success);}
